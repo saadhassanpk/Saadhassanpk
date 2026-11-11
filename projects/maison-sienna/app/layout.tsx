@@ -2,17 +2,20 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Maison Sienna | A Modern Mediterranean Table',
-  description: 'An editorial restaurant experience celebrating food, warmth and the art of gathering. A Next.js portfolio concept.',
-  keywords: ['restaurant website', 'modern Mediterranean', 'restaurant design', 'Next.js portfolio', 'Maison Sienna'],
+  metadataBase: new URL('https://maison-sienna-restaurant.vercel.app'),
+  title: 'Sienna | Come Hungry. Leave Inspired.',
+  description: 'Modern Mediterranean dining reimagined. A cinematic, scroll-directed, 540-frame restaurant portfolio experience.',
+  keywords: ['Sienna restaurant', 'restaurant portfolio', 'Mediterranean dining', 'Next.js', 'scrollytelling', '540-frame film'],
   openGraph: {
-    title: 'Maison Sienna — A Modern Mediterranean Table',
-    description: 'An invitation to gather. A beautifully crafted restaurant website concept.',
+    title: 'Sienna — Come Hungry. Leave Inspired.',
+    description: 'An editorial restaurant experience built around genuine 4K-source cinematic footage.',
+    siteName: 'Sienna',
     type: 'website',
-    images: [{ url: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=80', width: 1200, height: 630, alt: 'Elegant restaurant table' }],
+    images: [{url: '/story/hero-poster.jpg', width: 1920, height: 1080, alt: 'Sienna restaurant — gourmet dining'}],
   },
+  twitter: {card: 'summary_large_image', images: ['/story/hero-poster.jpg']},
 };
-export const viewport: Viewport = { themeColor: '#201f1b', width: 'device-width', initialScale: 1 };
+export const viewport: Viewport = { themeColor: '#f6f3eb', width: 'device-width', initialScale: 1 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return <html lang="en"><body>{children}</body></html>;

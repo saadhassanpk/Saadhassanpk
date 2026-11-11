@@ -2,185 +2,260 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-type Category = 'All' | 'To begin' | 'The mains' | 'Something sweet';
-type Dish = { id: number; name: string; subtitle: string; category: Exclude<Category, 'All'>; price: number; image: string; tag?: string; vegetarian?: boolean };
-type Booking = { name: string; email: string; date: string; time: string; guests: string };
+const FRAME_TOTAL = 540;
+const FRAMES_PER_SHEET = 9;
+type MenuCategory = 'All' | 'Small plates' | 'From the kitchen' | 'The sweet end';
+type Dish = { id: number; name: string; description: string; price: number; category: Exclude<MenuCategory, 'All'>; image: string; note?: string };
 
-const img = (id: string, w: number = 1000) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${w}&q=82`;
-const photos = {
-  hero: img('photo-1414235077428-338989a2e8c0', 2000),
-  interior: img('photo-1517248135467-4c7edcad34c4', 1450),
-  story: img('photo-1559339352-11d035aa65de', 1050),
-  chef: img('photo-1577219491135-ce391730fb2c', 1050),
-  reserve: img('photo-1511795409834-ef04bbd61622', 1700),
-};
-const dishes: Dish[] = [
-  { id: 1, name: 'Burrata & Heirloom', subtitle: 'Sweet tomato, basil oil, aged balsamic', category: 'To begin', price: 19, vegetarian: true, tag: 'A guest favourite', image: img('photo-1608897013039-887f21d8c804', 760) },
-  { id: 2, name: 'Crispy Calamari', subtitle: 'Lemon aioli, parsley, charred citrus', category: 'To begin', price: 22, image: img('photo-1559847844-5315695dadae', 760) },
-  { id: 3, name: 'Wild Mushroom Arancini', subtitle: 'Truffle cream, parmesan, fresh herbs', category: 'To begin', price: 18, vegetarian: true, image: img('photo-1547592180-85f173990554', 760) },
-  { id: 4, name: 'Saffron Pappardelle', subtitle: 'Slow tomato, pecorino, basil, olive oil', category: 'The mains', price: 34, vegetarian: true, tag: 'Signature', image: img('photo-1473093226795-af9932fe5856', 760) },
-  { id: 5, name: 'Wood-Fired Market Fish', subtitle: 'Preserved lemon, garden greens, beurre blanc', category: 'The mains', price: 42, image: img('photo-1519708227418-c8fd9a32b7a2', 760) },
-  { id: 6, name: 'Slow-Braised Lamb', subtitle: 'Smoked aubergine, pomegranate, mint', category: 'The mains', price: 46, tag: 'Chef’s pick', image: img('photo-1544025162-d76694265947', 760) },
-  { id: 7, name: 'Citrus Olive Oil Cake', subtitle: 'Whipped mascarpone, orange, pistachio', category: 'Something sweet', price: 17, vegetarian: true, image: img('photo-1488477181946-6428a0291777', 760) },
-  { id: 8, name: 'Dark Chocolate Crémeux', subtitle: 'Salted caramel, cocoa nib, vanilla', category: 'Something sweet', price: 18, vegetarian: true, image: img('photo-1551024506-0bccd828d307', 760) },
+const menu: Dish[] = [
+  { id: 1, name: 'Heirloom & burrata', description: 'Heritage tomatoes, basil oil, sea salt', price: 22, category: 'Small plates', image: '/studio/plated.png', note: 'THE FAVOURITE' },
+  { id: 2, name: 'Crisp artichokes', description: 'Preserved lemon, whipped ricotta', price: 19, category: 'Small plates', image: 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1100&q=86' },
+  { id: 3, name: 'Lobster agnolotti', description: 'Brown butter, lemon, fragrant herbs', price: 42, category: 'From the kitchen', image: '/studio/pasta.png', note: 'THE SIGNATURE' },
+  { id: 4, name: 'Fire-roasted market fish', description: 'Charred lemon, garden greens, olive oil', price: 46, category: 'From the kitchen', image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=1100&q=86' },
+  { id: 5, name: 'Olive oil & citrus cake', description: 'Mascarpone, orange, pistachio', price: 18, category: 'The sweet end', image: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=1100&q=86' },
+  { id: 6, name: 'Chocolate crémeux', description: 'Salted caramel, hazelnut praline', price: 19, category: 'The sweet end', image: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?auto=format&fit=crop&w=1100&q=86' },
 ];
-const categories: Category[] = ['All', 'To begin', 'The mains', 'Something sweet'];
-const times = ['17:30', '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00'];
-const money = (n: number) => `$${n.toFixed(2)}`;
-const today = () => { const d = new Date(); const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000); return local.toISOString().slice(0, 10); };
+const categories: MenuCategory[] = ['All', 'Small plates', 'From the kitchen', 'The sweet end'];
+const fmt = (value: number) => '$' + value.toFixed(0);
 
-function Icon({ name, size = 18 }: { name: string; size?: number }) {
-  const shared = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true as const };
-  if (name === 'arrow') return <svg {...shared}><path d="M4 12h16m-7-7 7 7-7 7" /></svg>;
-  if (name === 'arrow-up') return <svg {...shared}><path d="M5 19 19 5M7 5h12v12" /></svg>;
-  if (name === 'menu') return <svg {...shared}><path d="M4 7h16M4 12h16M4 17h16" /></svg>;
-  if (name === 'close') return <svg {...shared}><path d="M5 5l14 14M19 5 5 19" /></svg>;
-  if (name === 'plus') return <svg {...shared}><path d="M12 5v14M5 12h14" /></svg>;
-  if (name === 'minus') return <svg {...shared}><path d="M5 12h14" /></svg>;
-  if (name === 'bag') return <svg {...shared}><path d="M5 8h14l1 13H4L5 8ZM9 9V6a3 3 0 0 1 6 0v3" /></svg>;
-  if (name === 'calendar') return <svg {...shared}><rect x="3" y="5" width="18" height="16" rx="1"/><path d="M8 3v4M16 3v4M3 10h18" /></svg>;
-  if (name === 'clock') return <svg {...shared}><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2" /></svg>;
-  if (name === 'users') return <svg {...shared}><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M17 5a3 3 0 0 1 0 6m1 3a5 5 0 0 1 3 5" /></svg>;
-  if (name === 'check') return <svg {...shared}><path d="m5 12 5 5L20 7" /></svg>;
-  if (name === 'instagram') return <svg {...shared}><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" /></svg>;
-  return <svg {...shared}><circle cx="12" cy="12" r="9" /></svg>;
+function Arrow({ diagonal = false }: { diagonal?: boolean }) {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">{diagonal ? <><path d="M5 19 19 5"/><path d="M8 5h11v11"/></> : <><path d="M4 12h16"/><path d="m13 5 7 7-7 7"/></>}</svg>;
+}
+function Bag() {
+  return <svg width="21" height="21" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M4 8h16l-1 13H5L4 8Z"/><path d="M9 9V6a3 3 0 0 1 6 0v3"/></svg>;
 }
 
-
-
-const filmSheets = ['/story/scene-a-01.webp','/story/scene-a-02.webp','/story/scene-b-01.webp','/story/scene-b-02.webp'] as const;
-const FILM_FRAMES = 64;
-
-function ScrollFilm() {
+function FrameStory() {
   const sectionRef = useRef<HTMLElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [frame, setFrame] = useState(0);
-  const [loaded, setLoaded] = useState(false);
+  const [imageReady, setImageReady] = useState(false);
 
   useEffect(() => {
-    let alive = true;
-    Promise.all(filmSheets.map((url) => new Promise<void>((resolve) => {
-      const image = new window.Image();
-      image.onload = () => resolve();
-      image.onerror = () => resolve();
-      image.src = url;
-    }))).then(() => { if (alive) setLoaded(true); });
-    return () => { alive = false; };
-  }, []);
-
-  useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const canvas = canvasRef.current;
+    const section = sectionRef.current;
+    if (!canvas || !section) return;
+    const context = canvas.getContext('2d', { alpha: false, desynchronized: true });
+    if (!context) return;
+    let mobile = window.matchMedia('(max-width: 720px)').matches;
+    let target = 0;
+    let drawn = -1;
+    let current = 0;
     let raf = 0;
-    const update = () => {
-      raf = 0;
-      const node = sectionRef.current;
-      if (!node) return;
-      const rect = node.getBoundingClientRect();
-      const distance = Math.max(1, rect.height - window.innerHeight);
-      const ratio = Math.max(0, Math.min(1, -rect.top / distance));
-      const next = Math.min(FILM_FRAMES - 1, Math.floor(ratio * FILM_FRAMES));
-      setFrame(previous => previous === next ? previous : next);
+    let alive = true;
+    const cache = new Map<string, HTMLImageElement>();
+    const requests = new Set<string>();
+    const keyFor = (sheet: number) => '/story/' + (mobile ? 'mobile' : 'desktop') + '/s-' + String(sheet + 1).padStart(3, '0') + '.webp';
+
+    const queue = (sheet: number) => {
+      if (sheet < 0 || sheet >= 60) return;
+      const key = keyFor(sheet);
+      if (cache.has(key) || requests.has(key)) return;
+      requests.add(key);
+      const image = new Image();
+      image.decoding = 'async';
+      image.onload = () => {
+        requests.delete(key);
+        if (!alive) return;
+        cache.set(key, image);
+        if (cache.size > 7) {
+          for (const old of cache.keys()) {
+            const oldNumber = Number(old.match(/s-(\d+)\.webp/)?.[1] || 0) - 1;
+            if (Math.abs(oldNumber - Math.floor(target / FRAMES_PER_SHEET)) > 4) {
+              cache.delete(old);
+              if (cache.size <= 7) break;
+            }
+          }
+        }
+        schedule();
+      };
+      image.onerror = () => { requests.delete(key); };
+      image.src = key;
     };
-    const schedule = () => { if (!raf) raf = requestAnimationFrame(update); };
-    window.addEventListener('scroll', schedule, {passive:true});
-    window.addEventListener('resize', schedule);
-    update();
+
+    const resize = () => {
+      mobile = window.matchMedia('(max-width: 720px)').matches;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.max(1, Math.round(rect.width * dpr));
+      canvas.height = Math.max(1, Math.round(rect.height * dpr));
+      drawn = -1;
+      schedule();
+    };
+
+    const render = () => {
+      raf = 0;
+      if (!alive) return;
+      const difference = target - current;
+      if (Math.abs(difference) > .4) {
+        current += Math.sign(difference) * Math.max(1, Math.min(7, Math.abs(difference) * .2));
+      } else {
+        current = target;
+      }
+      const index = Math.min(FRAME_TOTAL - 1, Math.max(0, Math.round(current)));
+      const sheet = Math.floor(index / FRAMES_PER_SHEET);
+      queue(sheet);
+      queue(sheet + 1);
+      
+      queue(sheet - 1);
+      
+      const image = cache.get(keyFor(sheet));
+      if (image && image.complete && image.naturalWidth > 0 && index !== drawn) {
+        const tile = index % FRAMES_PER_SHEET;
+        const sourceWidth = image.naturalWidth / 3;
+        const sourceHeight = image.naturalHeight / 3;
+        const cw = canvas.width;
+        const ch = canvas.height;
+        const scale = Math.max(cw / sourceWidth, ch / sourceHeight);
+        const destinationWidth = sourceWidth * scale;
+        const destinationHeight = sourceHeight * scale;
+        context.imageSmoothingEnabled = true;
+        context.imageSmoothingQuality = 'high';
+        context.drawImage(image, (tile % 3) * sourceWidth, Math.floor(tile / 3) * sourceHeight,
+          sourceWidth, sourceHeight, (cw - destinationWidth) / 2, (ch - destinationHeight) / 2,
+          destinationWidth, destinationHeight);
+        drawn = index;
+        setFrame(index);
+        setImageReady(true);
+      }
+      if (Math.abs(current - target) > .3) schedule();
+    };
+    function schedule() { if (!raf && alive) raf = window.requestAnimationFrame(render); }
+    const onScroll = () => {
+      const bounds = section.getBoundingClientRect();
+      const distance = Math.max(1, section.offsetHeight - window.innerHeight);
+      target = Math.min(FRAME_TOTAL - 1, Math.max(0, Math.round((-bounds.top / distance) * (FRAME_TOTAL - 1))));
+      schedule();
+    };
+    const onResize = () => { resize(); onScroll(); };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onResize);
+    resize();
+    onScroll();
     return () => {
-      window.removeEventListener('scroll', schedule);
-      window.removeEventListener('resize', schedule);
+      alive = false;
       if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onResize);
     };
   }, []);
 
-  const sheet = Math.floor(frame / 16);
-  const tile = frame % 16;
-  const x = tile % 4;
-  const y = Math.floor(tile / 4);
-  const progress = frame / 63;
-  const chapter = progress < .34 ? 0 : progress < .67 ? 1 : 2;
-  const position = (x / 3 * 100) + '% ' + (y / 3 * 100) + '%';
-  return (
-    <section ref={sectionRef} className="scroll-film" id="film" aria-label="Scroll-controlled frame-by-frame restaurant film" data-frame={frame} data-sheet={sheet} data-frame-count={FILM_FRAMES}>
-      <div className="film-sticky">
-        <div className="film-backdrop"/>
-        <div className="film-frames" aria-hidden="true" style={{backgroundImage:'url("' + filmSheets[sheet] + '")',backgroundSize:'400% 400%',backgroundPosition:position}}/>
-        <div className="film-shade"/>
-        <div className="film-top"><span>MAISON SIENNA / THE ART OF FOOD</span><span>SCROLL TO DIRECT 64 REAL FILM FRAMES</span></div>
-        <div className="film-chapter" key={chapter}>
-          <span className="film-kicker">{chapter === 0 ? '01 / THE INGREDIENTS' : chapter === 1 ? '02 / THE CRAFT' : '03 / THE TABLE'}</span>
-          <h2>{chapter === 0 ? <>Good food<br/><em>takes time.</em></> : chapter === 1 ? <>Made slowly.<br/><em>Made with soul.</em></> : <>Every plate<br/><em>tells a story.</em></>}</h2>
-          <p>{chapter === 0 ? 'It begins with the ingredients.' : chapter === 1 ? 'A celebration of the hands that make it.' : 'From our kitchen to your table.'}</p>
-        </div>
-        <div className="film-bottom"><span>EVERY SCROLL, A NEW FRAME</span><div className="film-meter"><span style={{width:(progress * 100) + '%'}}/></div><span>{String(frame+1).padStart(2,'0')} / 64</span></div>
-        {!loaded && <span className="film-availability" aria-live="polite">Preparing cinematic frames...</span>}
+  const progress = frame / (FRAME_TOTAL - 1);
+  const chapter = progress < .35 ? 0 : progress < .69 ? 1 : 2;
+  const titles = [
+    { n: '01 / THE INGREDIENT', top: 'Beauty begins', bottom: 'with simplicity.', desc: 'A good meal starts long before it meets the plate.' },
+    { n: '02 / THE ART', top: 'Nothing ordinary.', bottom: 'Nothing rushed.', desc: 'Hands, heart and a little bit of magic.' },
+    { n: '03 / THE MOMENT', top: 'Made to savour.', bottom: 'Made to share.', desc: 'Every detail is an invitation to stay.' },
+  ];
+  const active = titles[chapter];
+  return <section className="film-section" id="film" ref={sectionRef} aria-label="540-frame scroll-controlled film" data-frame={frame} data-total-frames={FRAME_TOTAL}>
+    <div className="film-sticky">
+      <div className="film-poster" />
+      <canvas className={'film-canvas' + (imageReady ? ' is-ready' : '')} ref={canvasRef} role="img" aria-label="Cinematic close-up of a gourmet dish, animated by scrolling" />
+      <div className="film-topline"><span>SIENNA / A STORY IN 540 FRAMES</span><span>SCROLL TO DIRECT THE FILM</span></div>
+      <div className="film-caption-panel" key={chapter}>
+        <div className="tiny-label"><span className="dot"/>{active.n}</div>
+        <h2>{active.top}<br/><em>{active.bottom}</em></h2>
+        <p>{active.desc}</p>
+        <div className="film-counter"><span>{String(frame + 1).padStart(3, '0')} / 540</span><div className="film-bar"><i style={{ width: (progress * 100) + '%' }}/></div><span>SCROLL →</span></div>
       </div>
-    </section>
-  );
+      <div className="film-side-text">ONE FRAME AT A TIME · THE ART OF THE TABLE</div>
+    </div>
+  </section>;
 }
 
 export default function Home() {
-  const [mobileNav, setMobileNav] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<Category>('All');
-  const [vegetarian, setVegetarian] = useState(false);
+  const [mobileMenu, setMobileMenu] = useState(false);
+  const [category, setCategory] = useState<MenuCategory>('All');
   const [cart, setCart] = useState<Record<number, number>>({});
   const [cartOpen, setCartOpen] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
-  const [bookingSent, setBookingSent] = useState(false);
-  const [booking, setBooking] = useState<Booking>({ name: '', email: '', date: '', time: '19:00', guests: '2' });
+  const [bookingDone, setBookingDone] = useState(false);
+  const [booking, setBooking] = useState({ name: '', email: '', date: '', time: '19:00', guests: '2' });
   const [scrolled, setScrolled] = useState(false);
+  const today = new Date().toISOString().slice(0, 10);
+  const filtered = menu.filter(d => category === 'All' || d.category === category);
+  const count = Object.values(cart).reduce((sum, n) => sum + n, 0);
+  const total = useMemo(() => menu.reduce((sum, item) => sum + item.price * (cart[item.id] || 0), 0), [cart]);
+  const updateCart = (id: number, delta: number) => setCart(prev => {
+    const next = { ...prev };
+    const qty = Math.max(0, (next[id] || 0) + delta);
+    if (qty) next[id] = qty; else delete next[id];
+    return next;
+  });
 
-  useEffect(() => { const onScroll = () => setScrolled(window.scrollY > 36); window.addEventListener('scroll', onScroll, { passive: true }); return () => window.removeEventListener('scroll', onScroll); }, []);
-  useEffect(() => { const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') { setBookingOpen(false); setCartOpen(false); setMobileNav(false); } }; window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey); }, []);
-  useEffect(() => { document.body.style.overflow = bookingOpen || cartOpen || mobileNav ? 'hidden' : ''; return () => { document.body.style.overflow = ''; }; }, [bookingOpen, cartOpen, mobileNav]);
+  useEffect(() => {
+    const fn = () => setScrolled(window.scrollY > 40);
+    window.addEventListener('scroll', fn, { passive: true });
+    return () => window.removeEventListener('scroll', fn);
+  }, []);
+  useEffect(() => {
+    const close = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { setCartOpen(false); setBookingOpen(false); setMobileMenu(false); }
+    };
+    window.addEventListener('keydown', close);
+    return () => window.removeEventListener('keydown', close);
+  }, []);
+  useEffect(() => {
+    document.body.style.overflow = cartOpen || bookingOpen || mobileMenu ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [cartOpen, bookingOpen, mobileMenu]);
+  const reserve = () => { setBookingDone(false); setBookingOpen(true); setMobileMenu(false); };
 
-  const visible = dishes.filter((d) => (activeCategory === 'All' || d.category === activeCategory) && (!vegetarian || d.vegetarian));
-  const cartCount = Object.values(cart).reduce((sum, qty) => sum + qty, 0);
-  const cartTotal = useMemo(() => dishes.reduce((sum, dish) => sum + (cart[dish.id] || 0) * dish.price, 0), [cart]);
-  const selected = dishes.filter((d) => cart[d.id] > 0);
-  const changeQty = (id: number, delta: number) => setCart((current) => { const next = { ...current }; const qty = Math.max(0, (current[id] || 0) + delta); if (qty === 0) delete next[id]; else next[id] = qty; return next; });
-  const startBooking = () => { setBookingSent(false); setBookingOpen(true); setMobileNav(false); };
-  const navClick = () => setMobileNav(false);
-
-  return (
-    <>
-      <div className="announcement"><span>MADE FOR THE MOMENTS THAT MATTER</span><span className="announcement-end">A MODERN MEDITERRANEAN TABLE <span className="mini-star">✦</span> OPEN EVERY EVENING</span></div>
-      <header className={`site-header ${scrolled ? 'scrolled' : ''}`}>
-        <a className="brand" href="#home" onClick={navClick} aria-label="Maison Sienna home"><span className="brand-top">MAISON</span><span className="brand-main">SIENNA<span className="brand-dot">.</span></span><span className="brand-bottom">KITCHEN <span>◆</span> BAR</span></a>
-        <nav className={`primary-nav ${mobileNav ? 'nav-open' : ''}`} aria-label="Main navigation">
-          <a href="#story" onClick={navClick}>Our story</a><a href="#menu" onClick={navClick}>The menu</a><a href="#experience" onClick={navClick}>The experience</a><a href="#visit" onClick={navClick}>Visit us</a>
-          <button className="mobile-only nav-book" onClick={startBooking}>Reserve a table <Icon name="arrow" /></button>
+  return <>
+    <div className="site-root" id="top">
+      <div className="top-ticker"><span>A PLACE TO SLOW DOWN</span><span className="ticker-center">THE LONG WAY ROUND ALWAYS TASTES BETTER <b>✳</b> EST. IN OUR IMAGINATION</span><span>OPEN EVERY EVENING</span></div>
+      <header className={'header ' + (scrolled ? 'header-scrolled' : '')}>
+        <a className="brand" href="#top" onClick={() => setMobileMenu(false)} aria-label="Sienna restaurant home"><span className="brand-symbol">✳</span><span className="brand-name">SIENNA<span className="brand-period">.</span><small>THE HOUSE OF GOOD FOOD</small></span></a>
+        <nav className={'nav ' + (mobileMenu ? 'nav-expanded' : '')} aria-label="Primary navigation">
+          <a href="#philosophy" onClick={() => setMobileMenu(false)}>The philosophy</a>
+          <a href="#film" onClick={() => setMobileMenu(false)}>The film</a>
+          <a href="#menu" onClick={() => setMobileMenu(false)}>The menu</a>
+          <a href="#visit" onClick={() => setMobileMenu(false)}>Find us</a>
+          <button className="nav-mobile-reserve" onClick={reserve}>Reserve a table <Arrow diagonal/></button>
         </nav>
-        <div className="header-actions"><button className="header-cart" aria-label={`Open sample order, ${cartCount} items`} onClick={() => setCartOpen(true)}><Icon name="bag" size={20}/>{cartCount > 0 && <span className="cart-count">{cartCount}</span>}</button><button onClick={startBooking} className="button nav-reserve">BOOK A TABLE <Icon name="arrow-up" size={14}/></button><button className="menu-trigger" aria-label={mobileNav ? 'Close menu' : 'Open menu'} aria-expanded={mobileNav} onClick={() => setMobileNav(v => !v)}><Icon name={mobileNav ? 'close' : 'menu'} size={25}/></button></div>
+        <div className="header-end"><button className="bag-btn" aria-label={'Open sample cart: ' + count + ' items'} onClick={() => setCartOpen(true)}><Bag/>{count > 0 && <span className="bag-count">{count}</span>}</button><button className="reserve-btn" onClick={reserve}>BOOK A TABLE <Arrow diagonal/></button><button className="mobile-toggle" aria-label={mobileMenu ? 'Close menu' : 'Open menu'} aria-expanded={mobileMenu} onClick={() => setMobileMenu(v => !v)}><span/><span/></button></div>
       </header>
-
       <main>
-        <section className="hero" id="home"><div className="hero-photo" style={{ backgroundImage: `url('${photos.hero}')` }} />
-          <video className="hero-video" autoPlay muted playsInline loop preload="metadata" poster="/story/hero-poster.jpg" aria-hidden="true">
-            <source src="/story/hero-720.webm" type="video/webm" />
-            <source src="/story/hero-720.mp4" type="video/mp4" />
-          </video><div className="hero-video-shade" />
-          <div className="hero-content container"><div className="eyebrow hero-eyebrow"><span className="eyebrow-line"/> WHERE THE EVENING UNFOLDS</div><h1>A little more<br/>time for <em>the good</em><br/>things in life.</h1><p>A celebration of honest ingredients, generous tables and the simple pleasure of being together.</p><div className="hero-actions"><button className="button button-sand" onClick={startBooking}>RESERVE YOUR TABLE <Icon name="arrow-up" size={17}/></button><a className="text-link hero-link" href="#menu">DISCOVER OUR MENU <Icon name="arrow" size={19}/></a></div></div>
-          <div className="hero-side">THE ART OF GATHERING — EST. IN THE IMAGINATION</div>
-          <div className="hero-bottom container"><div className="scroll-cue"><span className="scroll-line"/> SCROLL TO EXPLORE</div><span className="hero-pagination">01 <span>/</span> 04</span></div>
+        <section className="hero" id="home">
+          <div className="hero-left">
+            <div className="hero-eyebrow"><span className="short-rule"/> MODERN MEDITERRANEAN DINING</div>
+            <div className="hero-copy"><span className="hero-asterisk">✳</span><h1>Come hungry.<br/><em>Leave inspired.</em></h1><p>For slow evenings, second helpings and stories worth staying for. Discover a new kind of gathering place.</p><div className="hero-buttons"><a className="primary-link" href="#film">EXPLORE OUR STORY <Arrow diagonal/></a><button className="underlined-link" onClick={reserve}>RESERVE YOUR EVENING <Arrow/></button></div></div>
+            <div className="hero-left-foot"><span>01 — A BETTER KIND OF EVENING</span><a href="#film" aria-label="Scroll to cinema">SCROLL TO EXPLORE <span className="arrow-down">↓</span></a></div>
+          </div>
+          <div className="hero-right">
+            <video className="hero-video" autoPlay muted playsInline loop preload="metadata" poster="/story/hero-poster.jpg" aria-label="Gourmet Mediterranean cuisine in close-up"><source src="/story/hero-film.webm" type="video/webm"/><source src="/story/hero-film.mp4" type="video/mp4"/></video>
+            <div className="hero-photo-corner"><span>THE ART OF</span><strong>GOOD FOOD.</strong></div>
+            <div className="hero-vertical">SIMPLE INGREDIENTS / UNFORGETTABLE MOMENTS</div>
+          </div>
         </section>
-        <ScrollFilm />
-        <section className="availability-bar"><div className="container availability-inner"><div className="availability-title"><span className="starburst">✳</span><span>YOUR SEAT AT<br/><strong>OUR TABLE</strong></span></div><div className="availability-input"><Icon name="calendar" size={19}/><div><label htmlFor="hero-date">CHOOSE A DATE</label><input id="hero-date" type="date" min={today()} value={booking.date} onChange={(e) => setBooking(b => ({...b,date:e.target.value}))} /></div></div><div className="availability-input"><Icon name="clock" size={19}/><div><label htmlFor="hero-time">DINING TIME</label><select id="hero-time" value={booking.time} onChange={(e) => setBooking(b => ({...b,time:e.target.value}))}>{times.map(t => <option value={t} key={t}>{t}</option>)}</select></div></div><div className="availability-input"><Icon name="users" size={19}/><div><label htmlFor="hero-guests">YOUR PARTY</label><select id="hero-guests" value={booking.guests} onChange={(e) => setBooking(b => ({...b,guests:e.target.value}))}>{Array.from({length:8},(_,i) => i+1).map(n => <option value={n} key={n}>{n} {n === 1 ? 'Guest' : 'Guests'}</option>)}</select></div></div><button className="button availability-button" onClick={startBooking}>FIND A TABLE <Icon name="arrow" size={17}/></button></div></section>
-
-
-        <section id="story" className="story-section section-pad"><div className="container story-grid"><div className="story-heading"><div className="eyebrow muted"><span className="eyebrow-line"/> HELLO, AND WELCOME</div><h2>Good food.<br/><em>Better together.</em></h2><div className="story-decoration">✳</div></div><div className="story-copy"><p className="lead">A place where the plates are meant to be shared, the wine flows freely, and there&apos;s always room for one more.</p><p>Inspired by the sun-drenched tables of the Mediterranean, Maison Sienna brings a little of that feeling home. Honest cooking, thoughtful details, and food that makes you slow down.</p><a className="text-link dark-link" href="#experience">GET TO KNOW US <Icon name="arrow" size={18}/></a></div></div><div className="container story-photo-grid"><div className="story-image story-image-main"><img src={photos.story} alt="Warm, inviting restaurant dining space" loading="lazy"/><span className="image-index">01 / THE SPACE</span></div><div className="story-image story-image-small"><img src={photos.chef} alt="Chef thoughtfully preparing a dish" loading="lazy"/><span className="image-index">02 / THE CRAFT</span></div><div className="story-stamp"><span>MADE WITH</span><b>♥</b><span>MADE TO SHARE</span></div></div></section>
-
-        <section id="menu" className="menu-section section-pad"><div className="container"><div className="menu-top"><div><div className="eyebrow dark-muted"><span className="eyebrow-line"/> FROM OUR KITCHEN</div><h2>Consider this<br/>your <em>invitation.</em></h2></div><div className="menu-intro"><p>Seasonal favourites, familiar flavours, unexpected little moments. There&apos;s something for every appetite.</p><span>ALL PRICES IN AUD · SAMPLE MENU</span></div></div><div className="menu-controls"><div className="menu-tabs" role="group" aria-label="Menu categories">{categories.map(category => <button key={category} className={activeCategory === category ? 'active' : ''} aria-pressed={activeCategory === category} onClick={() => setActiveCategory(category)}>{category}</button>)}</div><label className="veg-filter"><input type="checkbox" checked={vegetarian} onChange={e => setVegetarian(e.target.checked)}/><span className="filter-square">{vegetarian && <Icon name="check" size={12}/>}</span> VEGETARIAN ONLY</label></div><div className="dish-grid">{visible.length ? visible.map(d => <article className="dish-card" key={d.id}><div className="dish-photo"><img src={d.image} alt={d.name} loading="lazy"/>{d.tag && <span className="dish-badge">{d.tag}</span>}<button onClick={() => changeQty(d.id,1)} aria-label={`Add ${d.name} to sample order`} className="dish-add"><Icon name="plus" size={21}/></button></div><div className="dish-copy"><div className="dish-name-row"><h3>{d.name}</h3><span>{money(d.price)}</span></div><p>{d.subtitle}</p><div className="dish-foot"><span>{d.category.toUpperCase()}</span>{d.vegetarian && <span className="veg-dot">● VEGETARIAN</span>}</div></div></article>) : <div className="empty-menu">No dishes match this filter. Try another category.</div>}</div><div className="menu-note"><span>✳</span><p>Food made with care, served without fuss.<br/><small>Menu and pricing are illustrative, for this portfolio concept.</small></p><button onClick={() => setCartOpen(true)} className="text-link dark-link">VIEW SAMPLE ORDER ({cartCount}) <Icon name="arrow" size={17}/></button></div></div></section>
-
-        <section className="quote-strip"><div className="container quote-inner"><span className="quote-flower">✳</span><blockquote>“The best memories are made<br/>when we&apos;re not watching the clock.”</blockquote><span className="quote-small">AT MAISON SIENNA, YOU&apos;RE ALWAYS WELCOME TO STAY A WHILE.</span></div></section>
-
-        <section id="experience" className="experience-section"><div className="experience-photo"><img src={photos.interior} alt="An intimate restaurant interior with warm lighting" loading="lazy"/><div className="experience-photo-label">A PLACE TO MAKE YOURSELF AT HOME <span>↗</span></div></div><div className="experience-content"><div className="eyebrow"><span className="eyebrow-line"/> MORE THAN A MEAL</div><h2>Come as you are.<br/><em>Stay a little longer.</em></h2><p>Some places you come to eat. Others you come to feel something. We hope ours feels a little like a second home.</p><div className="value-list"><div><span>01</span><div><h3>Made with intention</h3><p>Good ingredients, thoughtful techniques, nothing unnecessary.</p></div></div><div><span>02</span><div><h3>Always room for more</h3><p>Big conversations, shared plates and unhurried evenings.</p></div></div><div><span>03</span><div><h3>A little everyday magic</h3><p>Warm light, beautiful music and the joy of simply being here.</p></div></div></div><button onClick={startBooking} className="text-link light-link">MAKE AN EVENING OF IT <Icon name="arrow" size={19}/></button></div></section>
-
-        <section id="visit" className="reservation-section" style={{backgroundImage:`linear-gradient(90deg,rgba(24,24,20,.84),rgba(24,24,20,.65)),url('${photos.reserve}')`}}><div className="container reservation-content"><span className="section-symbol">✳</span><div className="eyebrow centered"><span className="eyebrow-line"/> YOUR NEXT FAVOURITE EVENING</div><h2>We saved you<br/><em>a seat.</em></h2><p>Come for dinner. Stay for the stories.</p><button className="button button-sand" onClick={startBooking}>BOOK A TABLE <Icon name="arrow-up" size={17}/></button><span className="reservation-disclaimer">DEMONSTRATION ONLY — NO REAL RESERVATIONS</span></div></section>
+        <div className="manifesto-band"><span>THE TABLE IS YOURS</span><i>✳</i><span>CRAFTED WITH CARE</span><i>✳</i><span>EVERYDAY IS AN OCCASION</span><i>✳</i><span>MADE TO SHARE</span></div>
+        <section id="philosophy" className="philosophy section-space">
+          <div className="section-kicker"><span>001 / THE PHILOSOPHY</span><span>DISCOVER OUR WORLD</span></div>
+          <div className="philosophy-grid">
+            <h2>Because the<br/><em>best things</em><br/>take time<span className="orange-period">.</span></h2>
+            <div className="philosophy-right"><div className="mini-sun">✳</div><p>We believe a table is more than a place to eat. It is where the ordinary becomes something worth remembering.</p><span>HONEST INGREDIENTS. GENEROUS SPIRIT. ALWAYS SOMETHING GOOD ON THE TABLE.</span><a className="round-arrow" href="#film" aria-label="Watch the film"><Arrow diagonal/></a></div>
+          </div>
+          <div className="philosophy-pictures"><div className="photo-large"><img src="/studio/interior.png" alt="Light filled Mediterranean restaurant interior with sculptural arches" loading="lazy"/><div className="photo-index">01 / OUR SPACE</div></div><div className="photo-small"><img src="/studio/plated.png" alt="Refined Mediterranean dish on a linen table" loading="lazy"/><div className="photo-index">02 / OUR APPROACH</div></div></div>
+        </section>
+        <FrameStory/>
+        <section id="menu" className="menu-section section-space">
+          <div className="section-kicker"><span>002 / A TASTE OF SIENNA</span><span>GOOD FOOD, GOOD COMPANY</span></div>
+          <div className="menu-title"><h2>Something<br/><em>worth sharing.</em></h2><p>A little seasonal, a little unexpected, always made with care. This is a sample of what could be on the table.</p></div>
+          <div className="menu-tab-list" role="group" aria-label="Filter dishes by category">{categories.map(item => <button key={item} className={category === item ? 'selected' : ''} aria-pressed={category === item} onClick={() => setCategory(item)}>{item}<span>{item === 'All' ? String(menu.length).padStart(2, '0') : String(menu.filter(d => d.category === item).length).padStart(2, '0')}</span></button>)}</div>
+          <div className="menu-grid">{filtered.map((dish, i) => <article className="dish" key={dish.id}><div className="dish-img-wrap"><img src={dish.image} alt={dish.name} loading="lazy"/>{dish.note && <span className="dish-tag">{dish.note}</span>}<button className="dish-add" aria-label={'Add ' + dish.name + ' to sample order'} onClick={() => updateCart(dish.id, 1)}>+</button></div><div className="dish-meta"><div><span className="dish-type">{dish.category.toUpperCase()}</span><h3>{dish.name}</h3><p>{dish.description}</p></div><span className="dish-price">{fmt(dish.price)}</span></div></article>)}</div>
+          <div className="menu-footer"><span>ALL PRICES IN AUD · DEMONSTRATION MENU</span><button onClick={() => setCartOpen(true)}>VIEW YOUR SELECTION ({count}) <Arrow/></button></div>
+        </section>
+        <section className="interlude"><div className="interlude-content"><div className="interlude-kicker">✳ &nbsp; THE SIENNA WAY</div><h2>For the moments<br/><em>between moments.</em></h2><p>One more glass. One more story. One more reason to stay.</p><button className="light-btn" onClick={reserve}>MAKE A NIGHT OF IT <Arrow diagonal/></button></div><div className="interlude-image"><img src="/studio/interior.png" alt="Beautiful sunlit restaurant interior" loading="lazy"/></div></section>
+        <section className="visit section-space" id="visit">
+          <div className="section-kicker"><span>003 / YOUR PLACE AT THE TABLE</span><span>THE INVITATION IS OPEN</span></div>
+          <div className="visit-grid"><div><h2>The good part<br/><em>starts here.</em></h2><p>Celebrate a milestone or simply make a Tuesday feel special. There is always room for one more at Sienna.</p><button className="primary-link" onClick={reserve}>RESERVE YOUR EVENING <Arrow diagonal/></button></div><div className="visit-notes"><div><span>THE OCCASION</span><strong>Any reason is a<br/>good reason.</strong></div><div><span>THE HOURS</span><strong>Every evening,<br/>from 5:30 pm.</strong></div><div><span>THE LOCATION</span><strong>A fictional restaurant<br/>for a portfolio showcase.</strong></div></div></div>
+        </section>
       </main>
-      <footer className="footer"><div className="container footer-top"><div><a className="footer-brand" href="#home">MAISON<br/><em>SIENNA.</em></a><span className="footer-tagline">A LITTLE MORE TIME FOR THE GOOD THINGS.</span></div><div className="footer-column"><h4>EXPLORE</h4><a href="#story">Our story</a><a href="#menu">The menu</a><a href="#experience">Experience</a><button onClick={startBooking}>Reservations</button></div><div className="footer-column"><h4>GOOD TO KNOW</h4><span>Modern Mediterranean cuisine</span><span>Fictional dining concept</span><span>Not a real restaurant location</span><span>Australian dollar sample prices</span></div><div className="footer-news"><h4>GOOD THINGS TAKE TIME</h4><p>A crafted concept for a modern neighbourhood restaurant.</p><span className="footer-flower">✳</span></div></div><div className="container footer-bottom"><span>© {new Date().getFullYear()} MAISON SIENNA. PORTFOLIO CONCEPT.</span><span>DESIGNED TO FEEL LIKE A WARM WELCOME. <a href="#home">BACK TO TOP ↑</a></span></div></footer>
+      <footer className="footer"><div className="footer-top"><div className="footer-phrase">STAY A LITTLE LONGER. <span>✳</span></div><a href="#top">BACK TO TOP ↑</a></div><div className="footer-brand">SIENNA<span>.</span></div><div className="footer-base"><span>MODERN MEDITERRANEAN / MADE FOR THE MOMENT</span><span>© 2026 SIENNA · FICTIONAL PORTFOLIO CONCEPT</span><span>DESIGNED TO MAKE YOU FEEL SOMETHING.</span></div></footer>
+    </div>
 
-      {mobileNav && <button className="mobile-dim" aria-label="Close mobile navigation" onClick={() => setMobileNav(false)}/>}
-      {cartOpen && <div className="overlay" onMouseDown={(e) => {if (e.target === e.currentTarget) setCartOpen(false);}}><aside className="cart-drawer" role="dialog" aria-modal="true" aria-label="Sample order"><div className="drawer-header"><div><span className="eyebrow dark-muted">A LITTLE SOMETHING FOR LATER</span><h2>Your order <em>preview.</em></h2></div><button className="icon-close" onClick={() => setCartOpen(false)} aria-label="Close sample order"><Icon name="close" size={22}/></button></div><div className="drawer-body">{selected.length ? selected.map(d => <div className="cart-item" key={d.id}><img src={d.image} alt=""/><div><h3>{d.name}</h3><p>{money(d.price)}</p><div className="qty-controls"><button aria-label={`Remove one ${d.name}`} onClick={() => changeQty(d.id,-1)}><Icon name="minus" size={14}/></button><span>{cart[d.id]}</span><button aria-label={`Add one ${d.name}`} onClick={() => changeQty(d.id,1)}><Icon name="plus" size={14}/></button></div></div><b>{money(d.price * cart[d.id])}</b></div>) : <div className="cart-empty"><span>✳</span><h3>Nothing here just yet.</h3><p>Take a look at the menu and add something delicious to this sample order.</p><button className="button button-dark" onClick={() => setCartOpen(false)}>EXPLORE THE MENU <Icon name="arrow" /></button></div>}</div><div className="drawer-footer"><div className="subtotal"><span>Sample subtotal</span><strong>{money(cartTotal)}</strong></div><p>This is a design demo. Items are not purchased or submitted to a restaurant.</p><button className="button button-dark full-width" onClick={() => {setCartOpen(false);startBooking();}}>EXPLORE RESERVATIONS <Icon name="arrow" /></button>{cartCount > 0 && <button className="clear-button" onClick={() => setCart({})}>Clear sample order</button>}</div></aside></div>}
-      {bookingOpen && <div className="overlay modal-overlay" onMouseDown={(e) => {if(e.target === e.currentTarget) setBookingOpen(false);}}><section className="booking-modal" role="dialog" aria-modal="true" aria-label="Reservation demonstration"><button className="icon-close booking-close" onClick={() => setBookingOpen(false)} aria-label="Close reservation form"><Icon name="close" size={22}/></button>{bookingSent ? <div className="booking-success"><span className="success-icon"><Icon name="check" size={36}/></span><div className="eyebrow dark-muted">DEMONSTRATION COMPLETE</div><h2>Lovely choice,<br/><em>{booking.name.split(' ')[0]}.</em></h2><p>You&apos;ve completed the reservation <strong>preview</strong> for {booking.guests} {booking.guests === '1' ? 'guest' : 'guests'} on {booking.date} at {booking.time}.</p><div className="demo-alert">No reservation was submitted or saved. This is a fictional portfolio demonstration.</div><button className="button button-dark full-width" onClick={() => setBookingOpen(false)}>BACK TO THE WEBSITE <Icon name="arrow"/></button></div> : <><div className="booking-heading"><div className="eyebrow dark-muted"><span className="eyebrow-line"/> A LITTLE SPACE FOR YOU</div><h2>Let&apos;s make<br/><em>a date.</em></h2><p>A thoughtfully designed reservation form — demo interactions only.</p></div><form className="booking-form" onSubmit={(e) => {e.preventDefault();setBookingSent(true);}}><div className="form-grid"><label>Your name <input required maxLength={80} autoComplete="name" placeholder="Full name" value={booking.name} onChange={e => setBooking(b => ({...b,name:e.target.value}))}/></label><label>Email address <input required type="email" maxLength={150} autoComplete="email" placeholder="you@example.com" value={booking.email} onChange={e => setBooking(b => ({...b,email:e.target.value}))}/></label><label>Dining date <input required type="date" min={today()} value={booking.date} onChange={e => setBooking(b => ({...b,date:e.target.value}))}/></label><label>Dining time <select required value={booking.time} onChange={e => setBooking(b => ({...b,time:e.target.value}))}>{times.map(t => <option key={t} value={t}>{t}</option>)}</select></label><label className="span-2">Party size <select required value={booking.guests} onChange={e => setBooking(b => ({...b,guests:e.target.value}))}>{Array.from({length:8},(_,i)=>i+1).map(n => <option key={n} value={n}>{n} {n===1?'guest':'guests'}</option>)}</select></label></div><p className="form-note">Your details remain in this browser session. Nothing is sent to a server.</p><button type="submit" className="button button-dark full-width">PREVIEW RESERVATION <Icon name="arrow"/></button></form></>}</section></div>}
-    </>
-  );
+    {cartOpen && <div className="overlay" onMouseDown={() => setCartOpen(false)}><aside className="drawer" role="dialog" aria-modal="true" aria-label="Sample order" onMouseDown={event => event.stopPropagation()}><div className="modal-top"><div><span>YOUR SELECTION</span><h2>Good choices.</h2></div><button aria-label="Close cart" onClick={() => setCartOpen(false)}>×</button></div><div className="cart-rows">{count === 0 ? <p className="empty-cart">Nothing here yet. There are plenty of good things to discover.</p> : menu.filter(d => cart[d.id]).map(d => <div key={d.id} className="cart-line"><div><strong>{d.name}</strong><small>{fmt(d.price)} EACH</small></div><div className="qty"><button onClick={() => updateCart(d.id, -1)} aria-label={'Remove ' + d.name}>−</button><span>{cart[d.id]}</span><button onClick={() => updateCart(d.id, 1)} aria-label={'Add ' + d.name}>+</button></div></div>)}</div><div className="drawer-end"><div className="cart-total"><span>SAMPLE TOTAL</span><strong>{fmt(total)}</strong></div><p>Portfolio demonstration only. There is no payment or ordering backend.</p><button className="primary-link" onClick={() => { setCartOpen(false); reserve(); }}>MAKE A RESERVATION <Arrow diagonal/></button></div></aside></div>}
+    {bookingOpen && <div className="overlay" onMouseDown={() => setBookingOpen(false)}><div className="booking-modal" role="dialog" aria-modal="true" aria-labelledby="booking-title" onMouseDown={e => e.stopPropagation()}><div className="modal-top"><div><span>AN EVENING AT SIENNA</span><h2 id="booking-title">{bookingDone ? 'See you soon.' : 'Your table awaits.'}</h2></div><button aria-label="Close reservation" onClick={() => setBookingOpen(false)}>×</button></div>{bookingDone ? <div className="booking-confirm"><div className="big-star">✳</div><p>This is a portfolio demonstration. Your form was validated in the browser; no real reservation was made or sent.</p><button className="primary-link" onClick={() => setBookingOpen(false)}>BACK TO SIENNA <Arrow/></button></div> : <form className="booking-form" onSubmit={event => { event.preventDefault(); setBookingDone(true); }}><label>YOUR NAME<input name="name" type="text" value={booking.name} maxLength={80} required autoComplete="name" placeholder="Your full name" onChange={e => setBooking(b => ({ ...b, name: e.target.value }))}/></label><label>EMAIL ADDRESS<input name="email" type="email" value={booking.email} maxLength={120} required autoComplete="email" placeholder="you@example.com" onChange={e => setBooking(b => ({ ...b, email: e.target.value }))}/></label><div className="form-2"><label>THE DATE<input name="date" type="date" min={today} value={booking.date} required onChange={e => setBooking(b => ({ ...b, date: e.target.value }))}/></label><label>DINING TIME<select name="time" value={booking.time} onChange={e => setBooking(b => ({ ...b, time: e.target.value }))}>{['17:30','18:00','18:30','19:00','19:30','20:00','20:30','21:00'].map(t => <option key={t} value={t}>{t}</option>)}</select></label></div><label>NUMBER OF GUESTS<select name="guests" value={booking.guests} onChange={e => setBooking(b => ({ ...b, guests: e.target.value }))}>{Array.from({ length: 8 }, (_, i) => i + 1).map(n => <option key={n} value={n}>{n} {n === 1 ? 'guest' : 'guests'}</option>)}</select></label><button type="submit" className="primary-link">PREVIEW RESERVATION <Arrow diagonal/></button><p>Demonstration form only. No details are transmitted or stored.</p></form>}</div></div>}
+  </>;
 }

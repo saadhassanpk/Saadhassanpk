@@ -1,58 +1,45 @@
-# Maison Sienna — Restaurant Website Concept
+# Sienna — The House of Good Food
 
-A premium, responsive **Next.js 16 / React 19 / TypeScript** portfolio website for a **fictional** contemporary Mediterranean restaurant.
+A portfolio-grade **Next.js 16 / React 19 / TypeScript** restaurant experience, fully redesigned around editorial visual design and an original **540-frame** scroll-driven film.
+
+**Live website:** https://maison-sienna-restaurant.vercel.app/
 
 ## Features
 
-- Rich editorial landing page, immersive photographic hero, warm neutral palette and responsive typography
-- Mobile navigation and keyboard-accessible overlays
-- Interactive menu filtering with vegetarian selection
-- Functional sample cart with quantity editing, subtotal and no real payment processing
-- Reservation enquiry **demo** with form validation and a clear no-booking confirmation
-- Responsive mobile/tablet/desktop layouts, micro-interactions, page metadata and OpenGraph preview
-- No server credentials, no database required and no fake ordering or booking integrations
+- Fully redesigned contemporary Mediterranean restaurant experience, light ivory / deep olive / terracotta palette
+- True 540-frame scroll-directed sequence: 540 consecutive frames extracted from **a verified 4096×2160 25fps source**, not artificially repeated frames or seeking a compressed video
+- Desktop: 60 three-by-three WebP frame-sheets, **1280×675 per frame**, 3840×2025 source sprite image
+- Mobile: 60 portrait-cropped three-by-three sheets, **540×960 per frame**, avoiding landscape upscaling to a portrait viewport
+- Canvas drawing with animation-frame scheduling, direction reversal, nearby sheet prefetching and bounded cache
+- Autoplay hero film from a separate 4K source, delivered as optimized **1080p WebM + MP4**
+- Three **original Higgsfield-generated** restaurant images integrated in the page and hosted as local assets
+- Filterable six-item sample menu, responsive image cards, working client-side sample cart, keyboard-dismissable demo booking dialog
+- Search and social metadata, image alt text and clear demo-only disclaimer (no live bookings or payment backend)
 
-## Run locally
+## Local development
+
+Node.js 22.x:
 
 ```bash
 npm install
 npm run dev
 ```
 
-Visit http://localhost:3000. For a production compile run `npm run build` followed by `npm start`.
+`predev` and `prebuild` automatically run `scripts/prepare-assets.mjs`. For production:
 
-## Deploy to Vercel
+```bash
+npm run build
+npm run start
+```
 
-1. Push the folder to a GitHub repository.
-2. In Vercel, choose **Add New → Project → Import Git Repository**.
-3. Select the repository. If this project is nested in a larger repository, configure **Root Directory** as the folder containing `package.json`.
-4. Framework preset **Next.js**, then **Deploy**.
+The generation script downloads two 4K licensed Pexels MP4s and three Higgsfield originals, extracts exactly **540 source frames** into 60 desktop and 60 mobile WebP contact sheets, produces an 8-second 1080p hero MP4 + VP9 WebM, and writes assets to `public/story` and `public/studio`.
 
-No environment variables are needed.
+**Important:** Build-time network access is needed to download the listed original media. A network failure fails the build loudly instead of deploying broken links. Assets are then served from your own Vercel deployment; visitors do not have to fetch the source media remotely. The generated binary assets are intentionally not stored in Git.
 
-## Content and image notes
+## Media provenance
 
-Maison Sienna is an original **portfolio demonstration**, not a trading restaurant. Menu items/prices and reservation interactions are fictional. The site must not be used to collect genuine reservations or payments until a verified backend is implemented.
+- Higgsfield-generated original restaurant/food images: three successful `z_image` jobs in the owner's connected Higgsfield workspace (11 November 2026). Film generation on the Free plan was restricted; do not represent the film as Higgsfield-generated video.
+- Scrollytelling source: [Pexels video 7243902](https://www.pexels.com/video/7243902/) — source 4096×2160, 25fps, 24.58 seconds; first 540 genuine frames (21.6 seconds of original footage).
+- Hero source: [Pexels video 7243905](https://www.pexels.com/video/7243905/) — 4096×2160, 25fps, cut to an 8-second HD loop.
 
-Remote editorial photographs are displayed from `images.unsplash.com` and are governed by the [Unsplash License](https://unsplash.com/license). The project does not copy a live restaurant's brand or website. Photo references can be replaced in `app/page.tsx` before commercial use.
-
-## Technology
-
-Next.js App Router · React 19 · TypeScript · CSS (no component library needed)
-
-
-## Build-time cinematic scrollytelling
-
-The interactive sequence does not seek an HTML video as the user scrolls.
-During npm run build, scripts/prepare-assets.mjs uses FFmpeg to extract
-64 ordered film frames and tiles them into four 4x4 WebP sheets.
-Scroll direction selects an exact sheet and frame. A separately optimized
-local MP4 powers the autoplay hero and an extracted JPEG is its fallback.
-
-Footage: Pexels license (permitted modification and website use):
-https://www.pexels.com/video/a-chef-preparing-food-3768984/
-https://www.pexels.com/video/footage-of-the-chef-preparing-food-3780201/
-
-npm install && npm run dev builds frames automatically before dev starts.
-npm run build builds assets before compiling Next.js.
-Build-time network access to these two fixed Pexels video URLs is required.
+The fictional brand Sienna has no physical address, real payment checkout, reservation backend or operational opening-hours guarantee. All prices and restaurant details are demonstration content.
