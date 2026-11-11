@@ -54,3 +54,8 @@
 .film-availability{bottom:3%;right:6%;font:500 10px var(--sans);color:#e8ddcb}
 @media(max-width:740px){.film-top{top:15%;left:24px;right:24px;font-size:8px}.film-top span:last-child{display:none}.film-chapter{left:24px;right:24px}.film-chapter h2{font-size:clamp(54px,13vw,90px)}.film-bottom{left:24px;right:24px;gap:13px;grid-template-columns:1fr 1fr}.film-bottom span:first-child{grid-column:1/-1}.film-availability{font-size:9px}.hero-video{opacity:.45}}
 @media(prefers-reduced-motion:reduce){.hero-video{display:none}.film-video{display:none}.scroll-film{height:100vh}.film-chapter{animation:none}}
+
+/* True video-to-frame contact sheets, generated once during the build. */
+.film-backdrop {background-image:url('/story/hero-poster.jpg');background-size:cover;background-position:center;filter:saturate(.7) brightness(.7)}
+.film-frames {position:absolute;z-index:1;left:50%;top:50%;width:max(100%,177.78dvh);height:max(100%,56.25vw);transform:translate(-50%,-50%);background-repeat:no-repeat;image-rendering:auto;pointer-events:none}
+@media (prefers-reduced-motion:reduce){.film-frames{background-position:0% 0% !important}}

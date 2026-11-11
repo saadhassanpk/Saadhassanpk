@@ -47,61 +47,74 @@ function Icon({ name, size = 18 }: { name: string; size?: number }) {
 }
 
 
-const cinematicVideo = 'https://videos.pexels.com/video-files/3196297/3196297-hd_1920_1080_25fps.mp4';
+
+const filmSheets = ['/story/scene-a-01.webp','/story/scene-a-02.webp','/story/scene-b-01.webp','/story/scene-b-02.webp'] as const;
+const FILM_FRAMES = 64;
 
 function ScrollFilm() {
-  const stage = useRef<HTMLElement>(null);
-  const video = useRef<HTMLVideoElement>(null);
-  const [progress, setProgress] = useState(0);
+  const sectionRef = useRef<HTMLElement>(null);
+  const [frame, setFrame] = useState(0);
   const [loaded, setLoaded] = useState(false);
-  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    Promise.all(filmSheets.map((url) => new Promise<void>((resolve) => {
+      const image = new window.Image();
+      image.onload = () => resolve();
+      image.onerror = () => resolve();
+      image.src = url;
+    }))).then(() => { if (alive) setLoaded(true); });
+    return () => { alive = false; };
+  }, []);
+
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     let raf = 0;
-    let wanted = 0;
     const update = () => {
       raf = 0;
-      if (!stage.current) return;
-      const rect = stage.current.getBoundingClientRect();
-      const scrollable = Math.max(1, rect.height - window.innerHeight);
-      const t = Math.min(1, Math.max(0, -rect.top / scrollable));
-      wanted = t;
-      setProgress(old => Math.abs(old - t) > .002 ? t : old);
-      const element = video.current;
-      if (element && element.readyState >= 2 && Number.isFinite(element.duration) && element.duration > 0) {
-        const nextTime = t * Math.max(0, element.duration - 0.05);
-        if (Math.abs(element.currentTime - nextTime) > .07) element.currentTime = nextTime;
-      }
+      const node = sectionRef.current;
+      if (!node) return;
+      const rect = node.getBoundingClientRect();
+      const distance = Math.max(1, rect.height - window.innerHeight);
+      const ratio = Math.max(0, Math.min(1, -rect.top / distance));
+      const next = Math.min(FILM_FRAMES - 1, Math.floor(ratio * FILM_FRAMES));
+      setFrame(previous => previous === next ? previous : next);
     };
-    const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
-    const onReady = () => { setLoaded(true); update(); };
-    const element = video.current;
-    element?.addEventListener('loadedmetadata', onReady);
-    window.addEventListener('scroll', onScroll, {passive:true});
-    window.addEventListener('resize', onScroll);
+    const schedule = () => { if (!raf) raf = requestAnimationFrame(update); };
+    window.addEventListener('scroll', schedule, {passive:true});
+    window.addEventListener('resize', schedule);
     update();
     return () => {
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
       if (raf) cancelAnimationFrame(raf);
-      element?.removeEventListener('loadedmetadata',onReady);
-      window.removeEventListener('scroll',onScroll);
-      window.removeEventListener('resize',onScroll);
     };
   }, []);
-  return <section ref={stage} className="scroll-film" aria-label="Cinematic restaurant storytelling" id="film">
-    <div className="film-sticky">
-      <div className="film-backdrop" />
-      {!failed && <video ref={video} className="film-video" src={cinematicVideo} muted playsInline preload="auto" poster={photos.chef} onError={() => setFailed(true)} aria-hidden="true" />}
-      <div className="film-shade" />
-      <div className="film-top"><span>MAISON SIENNA / A CINEMATIC JOURNEY</span><span>SCROLL TO DIRECT THE FILM</span></div>
-      <div className="film-chapter" key={progress < .33 ? 'a' : progress < .67 ? 'b' : 'c'}>
-        <span className="film-kicker">{progress < .33 ? 'CHAPTER ONE / THE FIRE' : progress < .67 ? 'CHAPTER TWO / THE CRAFT' : 'CHAPTER THREE / THE TABLE'}</span>
-        <h2>{progress < .33 ? <>It begins<br/><em>with fire.</em></> : progress < .67 ? <>Made slowly.<br/><em>Made with soul.</em></> : <>Every plate<br/><em>tells a story.</em></>}</h2>
-        <p>{progress < .33 ? 'A little heat. A lot of heart.' : progress < .67 ? 'A celebration of the hands that make it.' : 'And the people who share it.'}</p>
+
+  const sheet = Math.floor(frame / 16);
+  const tile = frame % 16;
+  const x = tile % 4;
+  const y = Math.floor(tile / 4);
+  const progress = frame / 63;
+  const chapter = progress < .34 ? 0 : progress < .67 ? 1 : 2;
+  const position = (x / 3 * 100) + '% ' + (y / 3 * 100) + '%';
+  return (
+    <section ref={sectionRef} className="scroll-film" id="film" aria-label="Scroll-controlled frame-by-frame restaurant film" data-frame={frame} data-sheet={sheet} data-frame-count={FILM_FRAMES}>
+      <div className="film-sticky">
+        <div className="film-backdrop"/>
+        <div className="film-frames" aria-hidden="true" style={{backgroundImage:'url("' + filmSheets[sheet] + '")',backgroundSize:'400% 400%',backgroundPosition:position}}/>
+        <div className="film-shade"/>
+        <div className="film-top"><span>MAISON SIENNA / THE ART OF FOOD</span><span>SCROLL TO DIRECT 64 REAL FILM FRAMES</span></div>
+        <div className="film-chapter" key={chapter}>
+          <span className="film-kicker">{chapter === 0 ? '01 / THE INGREDIENTS' : chapter === 1 ? '02 / THE CRAFT' : '03 / THE TABLE'}</span>
+          <h2>{chapter === 0 ? <>Good food<br/><em>takes time.</em></> : chapter === 1 ? <>Made slowly.<br/><em>Made with soul.</em></> : <>Every plate<br/><em>tells a story.</em></>}</h2>
+          <p>{chapter === 0 ? 'It begins with the ingredients.' : chapter === 1 ? 'A celebration of the hands that make it.' : 'From our kitchen to your table.'}</p>
+        </div>
+        <div className="film-bottom"><span>EVERY SCROLL, A NEW FRAME</span><div className="film-meter"><span style={{width:(progress * 100) + '%'}}/></div><span>{String(frame+1).padStart(2,'0')} / 64</span></div>
+        {!loaded && <span className="film-availability" aria-live="polite">Preparing cinematic frames...</span>}
       </div>
-      <div className="film-bottom"><span>AN INVITATION TO SLOW DOWN</span><div className="film-meter"><span style={{width:`${progress * 100}%`}}/></div><span>{String(Math.max(1, Math.ceil(progress*100))).padStart(2,'0')} / 100</span></div>
-      {(!loaded || failed) && <span className="film-availability" aria-live="polite">{failed ? 'Photography fallback • Film temporarily unavailable' : 'Loading cinematic film…'}</span>}
-    </div>
-  </section>;
+    </section>
+  );
 }
 
 export default function Home() {
@@ -141,8 +154,8 @@ export default function Home() {
 
       <main>
         <section className="hero" id="home"><div className="hero-photo" style={{ backgroundImage: `url('${photos.hero}')` }} />
-          <video className="hero-video" autoPlay muted playsInline loop preload="metadata" poster={photos.hero} aria-hidden="true">
-            <source src="https://videos.pexels.com/video-files/3196236/3196236-hd_1920_1080_25fps.mp4" type="video/mp4" />
+          <video className="hero-video" autoPlay muted playsInline loop preload="metadata" poster="/story/hero-poster.jpg" aria-hidden="true">
+            <source src="/story/hero-720.mp4" type="video/mp4" />
           </video><div className="hero-video-shade" />
           <div className="hero-content container"><div className="eyebrow hero-eyebrow"><span className="eyebrow-line"/> WHERE THE EVENING UNFOLDS</div><h1>A little more<br/>time for <em>the good</em><br/>things in life.</h1><p>A celebration of honest ingredients, generous tables and the simple pleasure of being together.</p><div className="hero-actions"><button className="button button-sand" onClick={startBooking}>RESERVE YOUR TABLE <Icon name="arrow-up" size={17}/></button><a className="text-link hero-link" href="#menu">DISCOVER OUR MENU <Icon name="arrow" size={19}/></a></div></div>
           <div className="hero-side">THE ART OF GATHERING — EST. IN THE IMAGINATION</div>

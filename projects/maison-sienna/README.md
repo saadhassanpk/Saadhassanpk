@@ -39,3 +39,20 @@ Remote editorial photographs are displayed from `images.unsplash.com` and are go
 ## Technology
 
 Next.js App Router · React 19 · TypeScript · CSS (no component library needed)
+
+
+## Build-time cinematic scrollytelling
+
+The interactive sequence does not seek an HTML video as the user scrolls.
+During npm run build, scripts/prepare-assets.mjs uses FFmpeg to extract
+64 ordered film frames and tiles them into four 4x4 WebP sheets.
+Scroll direction selects an exact sheet and frame. A separately optimized
+local MP4 powers the autoplay hero and an extracted JPEG is its fallback.
+
+Footage: Pexels license (permitted modification and website use):
+https://www.pexels.com/video/a-chef-preparing-food-3768984/
+https://www.pexels.com/video/footage-of-the-chef-preparing-food-3780201/
+
+npm install && npm run dev builds frames automatically before dev starts.
+npm run build builds assets before compiling Next.js.
+Build-time network access to these two fixed Pexels video URLs is required.
