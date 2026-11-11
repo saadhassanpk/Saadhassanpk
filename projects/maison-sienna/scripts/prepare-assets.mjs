@@ -45,7 +45,8 @@ try{
   const hero=path.join(temp,'chef-a.mp4');
   run(['-ss','3','-i',hero,'-vf','scale=1280:-2','-frames:v','1','-q:v','3',path.join(output,'hero-poster.jpg')]);
   run(['-i',hero,'-vf','scale=1280:720:flags=lanczos','-c:v','libx264','-crf','27','-preset','fast','-movflags','+faststart','-an',path.join(output,'hero-720.mp4')]);
-  for(const name of ['scene-a-01.webp','scene-a-02.webp','scene-b-01.webp','scene-b-02.webp','hero-poster.jpg','hero-720.mp4']){
+  run(['-i',hero,'-vf','scale=1280:720:flags=lanczos','-c:v','libvpx-vp9','-b:v','0','-crf','36','-deadline','good','-cpu-used','5','-an',path.join(output,'hero-720.webm')]);
+  for(const name of ['scene-a-01.webp','scene-a-02.webp','scene-b-01.webp','scene-b-02.webp','hero-poster.jpg','hero-720.mp4','hero-720.webm']){
     if(!existsSync(path.join(output,name)))throw new Error('Missing media '+name);
   }
   console.log('Built 64 genuine video frames across 4 WebP sheets and optimized local hero MP4.');

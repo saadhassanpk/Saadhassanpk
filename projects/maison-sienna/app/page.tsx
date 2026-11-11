@@ -155,6 +155,7 @@ export default function Home() {
       <main>
         <section className="hero" id="home"><div className="hero-photo" style={{ backgroundImage: `url('${photos.hero}')` }} />
           <video className="hero-video" autoPlay muted playsInline loop preload="metadata" poster="/story/hero-poster.jpg" aria-hidden="true">
+            <source src="/story/hero-720.webm" type="video/webm" />
             <source src="/story/hero-720.mp4" type="video/mp4" />
           </video><div className="hero-video-shade" />
           <div className="hero-content container"><div className="eyebrow hero-eyebrow"><span className="eyebrow-line"/> WHERE THE EVENING UNFOLDS</div><h1>A little more<br/>time for <em>the good</em><br/>things in life.</h1><p>A celebration of honest ingredients, generous tables and the simple pleasure of being together.</p><div className="hero-actions"><button className="button button-sand" onClick={startBooking}>RESERVE YOUR TABLE <Icon name="arrow-up" size={17}/></button><a className="text-link hero-link" href="#menu">DISCOVER OUR MENU <Icon name="arrow" size={19}/></a></div></div>
