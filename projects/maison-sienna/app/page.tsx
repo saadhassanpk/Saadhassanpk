@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import ScrollStory from './components/ScrollStory';
 
 type Category = 'All' | 'To begin' | 'The mains' | 'Something sweet';
 type Dish = { id: number; name: string; subtitle: string; category: Exclude<Category, 'All'>; price: number; image: string; tag?: string; vegetarian?: boolean };
@@ -145,8 +144,6 @@ export default function Home() {
           <video className="hero-video" autoPlay muted playsInline loop preload="metadata" poster={photos.hero} aria-hidden="true">
             <source src="https://videos.pexels.com/video-files/3196236/3196236-hd_1920_1080_25fps.mp4" type="video/mp4" />
           </video><div className="hero-video-shade" />
-          <video className="hero-video" muted autoPlay loop playsInline preload="metadata" poster={photos.hero} aria-hidden="true"><source src={cinematicVideo} type="video/mp4" /></video>
-          <div className="hero-video-shade" />
           <div className="hero-content container"><div className="eyebrow hero-eyebrow"><span className="eyebrow-line"/> WHERE THE EVENING UNFOLDS</div><h1>A little more<br/>time for <em>the good</em><br/>things in life.</h1><p>A celebration of honest ingredients, generous tables and the simple pleasure of being together.</p><div className="hero-actions"><button className="button button-sand" onClick={startBooking}>RESERVE YOUR TABLE <Icon name="arrow-up" size={17}/></button><a className="text-link hero-link" href="#menu">DISCOVER OUR MENU <Icon name="arrow" size={19}/></a></div></div>
           <div className="hero-side">THE ART OF GATHERING — EST. IN THE IMAGINATION</div>
           <div className="hero-bottom container"><div className="scroll-cue"><span className="scroll-line"/> SCROLL TO EXPLORE</div><span className="hero-pagination">01 <span>/</span> 04</span></div>
@@ -154,7 +151,6 @@ export default function Home() {
         <ScrollFilm />
         <section className="availability-bar"><div className="container availability-inner"><div className="availability-title"><span className="starburst">✳</span><span>YOUR SEAT AT<br/><strong>OUR TABLE</strong></span></div><div className="availability-input"><Icon name="calendar" size={19}/><div><label htmlFor="hero-date">CHOOSE A DATE</label><input id="hero-date" type="date" min={today()} value={booking.date} onChange={(e) => setBooking(b => ({...b,date:e.target.value}))} /></div></div><div className="availability-input"><Icon name="clock" size={19}/><div><label htmlFor="hero-time">DINING TIME</label><select id="hero-time" value={booking.time} onChange={(e) => setBooking(b => ({...b,time:e.target.value}))}>{times.map(t => <option value={t} key={t}>{t}</option>)}</select></div></div><div className="availability-input"><Icon name="users" size={19}/><div><label htmlFor="hero-guests">YOUR PARTY</label><select id="hero-guests" value={booking.guests} onChange={(e) => setBooking(b => ({...b,guests:e.target.value}))}>{Array.from({length:8},(_,i) => i+1).map(n => <option value={n} key={n}>{n} {n === 1 ? 'Guest' : 'Guests'}</option>)}</select></div></div><button className="button availability-button" onClick={startBooking}>FIND A TABLE <Icon name="arrow" size={17}/></button></div></section>
 
-        <ScrollStory />
 
         <section id="story" className="story-section section-pad"><div className="container story-grid"><div className="story-heading"><div className="eyebrow muted"><span className="eyebrow-line"/> HELLO, AND WELCOME</div><h2>Good food.<br/><em>Better together.</em></h2><div className="story-decoration">✳</div></div><div className="story-copy"><p className="lead">A place where the plates are meant to be shared, the wine flows freely, and there&apos;s always room for one more.</p><p>Inspired by the sun-drenched tables of the Mediterranean, Maison Sienna brings a little of that feeling home. Honest cooking, thoughtful details, and food that makes you slow down.</p><a className="text-link dark-link" href="#experience">GET TO KNOW US <Icon name="arrow" size={18}/></a></div></div><div className="container story-photo-grid"><div className="story-image story-image-main"><img src={photos.story} alt="Warm, inviting restaurant dining space" loading="lazy"/><span className="image-index">01 / THE SPACE</span></div><div className="story-image story-image-small"><img src={photos.chef} alt="Chef thoughtfully preparing a dish" loading="lazy"/><span className="image-index">02 / THE CRAFT</span></div><div className="story-stamp"><span>MADE WITH</span><b>♥</b><span>MADE TO SHARE</span></div></div></section>
 
