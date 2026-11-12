@@ -1,22 +1,15 @@
-import type { Metadata, Viewport } from 'next';
+import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://maison-sienna-restaurant.vercel.app'),
-  title: 'Sienna | Come Hungry. Leave Inspired.',
-  description: 'Modern Mediterranean dining reimagined. A cinematic, scroll-directed, 540-frame restaurant portfolio experience.',
-  keywords: ['Sienna restaurant', 'restaurant portfolio', 'Mediterranean dining', 'Next.js', 'scrollytelling', '540-frame film'],
-  openGraph: {
-    title: 'Sienna — Come Hungry. Leave Inspired.',
-    description: 'An editorial restaurant experience built around genuine 4K-source cinematic footage.',
-    siteName: 'Sienna',
-    type: 'website',
-    images: [{url: '/story/hero-poster.jpg', width: 1920, height: 1080, alt: 'Sienna restaurant — gourmet dining'}],
-  },
-  twitter: {card: 'summary_large_image', images: ['/story/hero-poster.jpg']},
+  title:'Maison Sienna | A Mediterranean Kitchen & Bar',
+  description:'A table worth staying for. An intimate Mediterranean-inspired restaurant experience, honest cooking and beautiful evenings.',
+  keywords:['Mediterranean dining','restaurant','fine dining','seasonal dining','Maison Sienna'],
+  openGraph:{title:'Maison Sienna — An Evening to Remember',description:'Good food. Great company. A little more time for both.',images:[{url:'/media/interior.webp',width:2560,height:1707,alt:'Warm Maison Sienna-inspired dining room'}],type:'website'},
+  twitter:{card:'summary_large_image'},
+  robots:{index:true,follow:true}
 };
-export const viewport: Viewport = { themeColor: '#f6f3eb', width: 'device-width', initialScale: 1 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({children}:{children:React.ReactNode}){
   return <html lang="en"><body>{children}</body></html>;
 }
