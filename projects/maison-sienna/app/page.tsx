@@ -88,7 +88,7 @@ function FrameStory() {
       if (!alive) return;
       const difference = target - current;
       if (Math.abs(difference) > .4) {
-        current += Math.sign(difference) * Math.max(1, Math.min(7, Math.abs(difference) * .2));
+        current += Math.sign(difference) * Math.min(Math.abs(difference), Math.abs(difference) > 90 ? 50 : Math.max(2, Math.min(14, Math.abs(difference) * .5)));
       } else {
         current = target;
       }
@@ -125,6 +125,8 @@ function FrameStory() {
       const bounds = section.getBoundingClientRect();
       const distance = Math.max(1, section.offsetHeight - window.innerHeight);
       target = Math.min(FRAME_TOTAL - 1, Math.max(0, Math.round((-bounds.top / distance) * (FRAME_TOTAL - 1))));
+      const nearTarget = Math.floor(target / FRAMES_PER_SHEET);
+      queue(nearTarget); queue(nearTarget - 1); queue(nearTarget + 1);
       schedule();
     };
     const onResize = () => { resize(); onScroll(); };
