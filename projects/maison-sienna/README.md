@@ -1,45 +1,51 @@
-# Sienna — The House of Good Food
+# Maison Sienna — A Mediterranean Kitchen & Bar
 
-A portfolio-grade **Next.js 16 / React 19 / TypeScript** restaurant experience, fully redesigned around editorial visual design and an original **540-frame** scroll-driven film.
+An original, cinematic restaurant portfolio experience built with **Next.js 16, React 19 and TypeScript**.
 
-**Live website:** https://maison-sienna-restaurant.vercel.app/
+**Live production site:** https://maison-sienna-restaurant.vercel.app/
 
-## Features
+## Experience
 
-- Fully redesigned contemporary Mediterranean restaurant experience, light ivory / deep olive / terracotta palette
-- True 540-frame scroll-directed sequence: 540 consecutive frames extracted from **a verified 4096×2160 25fps source**, not artificially repeated frames or seeking a compressed video
-- Desktop: 60 three-by-three WebP frame-sheets, **1280×675 per frame**, 3840×2025 source sprite image
-- Mobile: 60 portrait-cropped three-by-three sheets, **540×960 per frame**, avoiding landscape upscaling to a portrait viewport
-- Canvas drawing with animation-frame scheduling, direction reversal, nearby sheet prefetching and bounded cache
-- Autoplay hero film from a separate 4K source, delivered as optimized **1080p WebM + MP4**
-- Three **original Higgsfield-generated** restaurant images integrated in the page and hosted as local assets
-- Filterable six-item sample menu, responsive image cards, working client-side sample cart, keyboard-dismissable demo booking dialog
-- Search and social metadata, image alt text and clear demo-only disclaimer (no live bookings or payment backend)
+- Bespoke, responsive editorial interface: ivory, deep forest, warm brass and oversized refined serif typography.
+- Full-screen **2K (2048×1080) video hero**, seven seconds, looping silently with a self-hosted poster fallback.
+- **540-frame 2K scroll-controlled film**, 21.6 seconds at 25fps, with three distinct chapter transitions. Scrolling forward/backward seeks to the matching decoded video frame; the website does not display developer metrics or frame counts.
+- Ten locally hosted high-resolution food and interior photographs from Unsplash, requested at 2560px width and stored as WebP.
+- Interactive six-dish menu with category filters, selection drawer, quantity controls and pricing.
+- Reservation-preference modal with date, guests, time, contact details and review summary. **It does not send or confirm real reservations.**
+- Accessible semantics, keyboard dismissal, reduced-motion fallback, image alt text and OpenGraph metadata.
 
-## Local development
+## Media production / provenance
 
-Node.js 22.x:
+All video and photography shipped by the site is stored under `public/media/` and served by Vercel rather than hotlinked from third-party servers.
+
+- Hero and chapter one source: [Pexels 4926203](https://www.pexels.com/video/4926203/) — 4096×2160, ~12 seconds.
+- Chapters two and three: [Pexels 6823282](https://www.pexels.com/video/6823282/) — 4096×2160, 29 seconds.
+- **Film:** three 7.2-second sequences encoded at 2048×1080, 25fps, totaling exactly 540 video frames (verified by `ffprobe` in GitHub Actions).
+- **Photos:** the ten Unsplash source IDs and download commands are recorded in [`.github/workflows/maison-sienna-assets.yml`](../../.github/workflows/maison-sienna-assets.yml). Images are requested at 2560px width; the resulting WebP files are committed under `public/media/`.
+- [Pexels licence](https://www.pexels.com/license/) and [Unsplash licence](https://unsplash.com/license/) permit free use of these assets in commercial and personal projects, subject to their restrictions. Do not imply pictured people, brands or venues endorse this fictional restaurant.
+
+The older `scripts/prepare-assets.mjs` is **not part of the current production build**; the replacement source-controlled 2K media is produced by the GitHub Actions workflow above. Higgsfield video generation was unavailable under the connected Free plan for this particular build. No Higgsfield-generated footage is claimed.
+
+## Development
+
+Node.js 22.x, npm:
 
 ```bash
 npm install
 npm run dev
-```
-
-`predev` and `prebuild` automatically run `scripts/prepare-assets.mjs`. For production:
-
-```bash
+npm run typecheck
 npm run build
 npm run start
 ```
 
-The generation script downloads two 4K licensed Pexels MP4s and three Higgsfield originals, extracts exactly **540 source frames** into 60 desktop and 60 mobile WebP contact sheets, produces an 8-second 1080p hero MP4 + VP9 WebM, and writes assets to `public/story` and `public/studio`.
+Project root (within the GitHub profile repository): `projects/maison-sienna`. Vercel's Root Directory points there, with `main` as the production branch. Assets are committed, so routine development/builds do not need to download original stock footage.
 
-**Important:** Build-time network access is needed to download the listed original media. A network failure fails the build loudly instead of deploying broken links. Assets are then served from your own Vercel deployment; visitors do not have to fetch the source media remotely. The generated binary assets are intentionally not stored in Git.
+## Verification
 
-## Media provenance
+- Production build: Vercel READY; TypeScript compilation passed (12 November 2026).
+- Desktop browser QA: hero video movement, scrollytelling visuals, images, navigation, menu filtering, selection drawer and reservation modal observed functioning; no blocking visual issues reported.
+- **Mobile browser viewport has not been independently verified.** Responsive CSS breakpoints exist, but do not treat that as a completed mobile QA pass.
 
-- Higgsfield-generated original restaurant/food images: three successful `z_image` jobs in the owner's connected Higgsfield workspace (11 November 2026). Film generation on the Free plan was restricted; do not represent the film as Higgsfield-generated video.
-- Scrollytelling source: [Pexels video 7243902](https://www.pexels.com/video/7243902/) — source 4096×2160, 25fps, 24.58 seconds; first 540 genuine frames (21.6 seconds of original footage).
-- Hero source: [Pexels video 7243905](https://www.pexels.com/video/7243905/) — 4096×2160, 25fps, cut to an 8-second HD loop.
+## Scope
 
-The fictional brand Sienna has no physical address, real payment checkout, reservation backend or operational opening-hours guarantee. All prices and restaurant details are demonstration content.
+This is a fictional portfolio restaurant. The UI is client-presentable, but pricing, brand, restaurant identity, menu and reservation preferences are illustrative. No backend booking, payment processing, emails or inventory service is connected. Integrate an actual restaurant's operational services before commercial launch.
