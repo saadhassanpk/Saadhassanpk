@@ -1,0 +1,78 @@
+name: Prepare Maison Sienna cinematic media
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/maison-sienna-assets.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  prepare-assets:
+    name: Encode and commit licensed 2K restaurant media
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Ensure encoder is available
+        run: |
+          if ! command -v ffmpeg >/dev/null; then sudo apt-get update -qq && sudo apt-get install -y ffmpeg; fi
+          ffmpeg -version | head -1
+      - name: Download licensed Pexels films and Unsplash photography
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd projects/maison-sienna
+          mkdir -p public/media raw
+          curl -fsSL --retry 3 --connect-timeout 20 --max-time 200 'https://videos.pexels.com/video-files/4926203/4926203-uhd_4096_2160_30fps.mp4' -o raw/fire.mp4
+          curl -fsSL --retry 3 --connect-timeout 20 --max-time 250 'https://videos.pexels.com/video-files/6823282/6823282-uhd_4096_2160_25fps.mp4' -o raw/prep.mp4
+          pairs=(
+            'hero-room photo-1517248135467-4c7edcad34c4'
+            'interior photo-1414235077428-338989a2e8c0'
+            'table photo-1559339352-11d035aa65de'
+            'chef photo-1577219491135-ce391730fb2c'
+            'pasta photo-1473093226795-af9932fe5856'
+            'seafood photo-1519708227418-c8fd9a32b7a2'
+            'grill photo-1544025162-d76694265947'
+            'burrata photo-1608897013039-887f21d8c804'
+            'dessert photo-1551024506-0bccd828d307'
+            'dinner photo-1559847844-5315695dadae'
+          )
+          for item in "${pairs[@]}"; do
+            read -r label id <<< "$item"
+            curl -fsSL --retry 3 --connect-timeout 20 --max-time 65 "https://images.unsplash.com/${id}?fm=webp&fit=crop&w=2560&q=82" -o "public/media/${label}.webp"
+            test "$(wc -c < "public/media/${label}.webp")" -gt 40000
+          done
+      - name: Produce cinematic 2K films and verify exact scroll sequence
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd projects/maison-sienna
+          ffmpeg -hide_banner -loglevel error -y -threads 3 \
+            -i raw/fire.mp4 -i raw/prep.mp4 \
+            -filter_complex '[0:v]trim=start=0:duration=7.2,setpts=PTS-STARTPTS,fps=25,scale=2048:1080:flags=fast_bilinear,setsar=1[v0];[1:v]trim=start=2:duration=7.2,setpts=PTS-STARTPTS,fps=25,scale=2048:1080:flags=fast_bilinear,setsar=1[v1];[1:v]trim=start=17:duration=7.2,setpts=PTS-STARTPTS,fps=25,scale=2048:1080:flags=fast_bilinear,setsar=1[v2];[v0][v1][v2]concat=n=3:v=1:a=0[v]' \
+            -map '[v]' -frames:v 540 -an -c:v libx264 -preset veryfast -crf 27 -g 15 -keyint_min 15 -pix_fmt yuv420p -movflags +faststart -r 25 public/media/story-540-2k.mp4
+          ffmpeg -hide_banner -loglevel error -y -threads 3 -i raw/fire.mp4 -t 7 -vf 'fps=25,scale=2048:1080:flags=fast_bilinear' -an -c:v libx264 -preset veryfast -crf 27 -pix_fmt yuv420p -movflags +faststart public/media/hero-fire-2k.mp4
+          ffmpeg -hide_banner -loglevel error -y -ss 1 -i public/media/story-540-2k.mp4 -frames:v 1 -q:v 2 public/media/hero-poster.jpg
+          count=$(ffprobe -v error -select_streams v:0 -show_entries stream=nb_frames -of csv=p=0 public/media/story-540-2k.mp4)
+          size=$(ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=p=0 public/media/story-540-2k.mp4)
+          echo "scroll film frames=$count resolution=$size"
+          test "$count" = 540
+          test "$size" = 2048,1080
+          rm -rf raw
+          du -sh public/media
+      - name: Commit source media to the portfolio
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add projects/maison-sienna/public/media
+          if ! git diff --cached --quiet; then
+            git commit -m 'Add self-hosted 2K imagery and cinematic 540-frame restaurant film'
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
