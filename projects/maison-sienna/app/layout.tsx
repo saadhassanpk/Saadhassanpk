@@ -1,15 +1,20 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import { CartProvider } from '@/components/cart-provider';
 
 export const metadata: Metadata = {
-  title:'Maison Sienna | A Mediterranean Kitchen & Bar',
-  description:'A table worth staying for. An intimate Mediterranean-inspired restaurant experience, honest cooking and beautiful evenings.',
-  keywords:['Mediterranean dining','restaurant','fine dining','seasonal dining','Maison Sienna'],
-  openGraph:{title:'Maison Sienna — An Evening to Remember',description:'Good food. Great company. A little more time for both.',images:[{url:'/media/interior.webp',width:2560,height:1707,alt:'Warm Maison Sienna-inspired dining room'}],type:'website'},
-  twitter:{card:'summary_large_image'},
-  robots:{index:true,follow:true}
+  title: 'Maison Sienna | A Modern Mediterranean Table',
+  description: 'An editorial restaurant experience celebrating food, warmth and the art of gathering. A Next.js portfolio concept.',
+  keywords: ['restaurant website', 'modern Mediterranean', 'restaurant design', 'Next.js portfolio', 'Maison Sienna'],
+  openGraph: {
+    title: 'Maison Sienna — A Modern Mediterranean Table',
+    description: 'An invitation to gather. A beautifully crafted restaurant website concept.',
+    type: 'website',
+    images: [{ url: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=80', width: 1200, height: 630, alt: 'Elegant restaurant table' }],
+  },
 };
+export const viewport: Viewport = { themeColor: '#201f1b', width: 'device-width', initialScale: 1 };
 
-export default function RootLayout({children}:{children:React.ReactNode}){
-  return <html lang="en"><body>{children}</body></html>;
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  return <html lang="en"><body><CartProvider>{children}</CartProvider></body></html>;
 }
